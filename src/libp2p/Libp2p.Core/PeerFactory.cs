@@ -3,6 +3,7 @@
 
 using Multiformats.Address;
 using Multiformats.Address.Protocols;
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 
 namespace Nethermind.Libp2p.Core;
@@ -15,15 +16,18 @@ public class PeerFactory : IPeerFactory
     private IChannelFactory _upChannelFactory;
     private static int CtxId = 0;
 
+    private ConcurrentDictionary<Identity, IRemotePeer> RemotePeers = new();
+
     public PeerFactory(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
     }
 
-    public virtual ILocalPeer Create(Identity? identity = default, Multiaddress? localAddr = default)
+    public virtual ILocalPeer Create(Identity identity, Multiaddress? localAddr = default)
     {
-        identity ??= new Identity();
-        return new LocalPeer(this) { Identity = identity ?? new Identity(), Address = localAddr ?? $"/ip4/0.0.0.0/tcp/0/p2p/{identity.PeerId}" };
+        var peer = new LocalPeer(this, identity);
+        peer.GetOrAddAddress(localAddr ?? $"/ip4/0.0.0.0/tcp/0/{identity.PeerId}");
+        return peer;
     }
 
     /// <summary>
@@ -39,13 +43,17 @@ public class PeerFactory : IPeerFactory
         _upChannelFactory = upChannelFactory;
     }
 
+    private IRemotePeer GetRemotePeer(Identity identity) {
+        return RemotePeers.GetOrAdd(identity, (identity) => new RemotePeer(this, identity));
+    }
     private async Task<IListener> ListenAsync(LocalPeer peer, Multiaddress addr, CancellationToken token)
     {
-        peer.Address = addr;
-        if (!peer.Address.Has<P2P>())
+        if (!addr.Has<P2P>())
         {
-            peer.Address = peer.Address.Add<P2P>(peer.Identity.PeerId.ToString());
+            addr = addr.Add<P2P>(peer.Identity.PeerId.ToString());
         }
+        peer.GetOrAddAddress(addr);
+
 
         Channel chan = new();
         if (token != default)
@@ -70,17 +78,10 @@ public class PeerFactory : IPeerFactory
             peerContext.OnListenerReady -= OnListenerReady;
         }
 
-        RemotePeer remotePeer = new(this, peer, peerContext);
-        peerContext.RemotePeer = remotePeer;
 
         PeerListener result = new(chan, peer);
         peerContext.OnRemotePeerConnection += remotePeer =>
         {
-            if (((RemotePeer)remotePeer).LocalPeer != peer)
-            {
-                return;
-            }
-
             ConnectedTo(remotePeer, false)
                 .ContinueWith(t => { result.RaiseOnConnection(remotePeer); }, token);
         };
@@ -110,7 +111,6 @@ public class PeerFactory : IPeerFactory
     {
         try
         {
-            Channel chan = new();
             token.Register(() => _ = chan.CloseAsync());
 
             PeerContext context = new()
@@ -118,7 +118,8 @@ public class PeerFactory : IPeerFactory
                 Id = $"ctx-{++CtxId}",
                 LocalPeer = peer,
             };
-            RemotePeer result = new(this, peer, context) { Address = addr, Channel = chan };
+
+            RemotePeer result = new(this, peer, context) { Address = addr };
             context.RemotePeer = result;
 
             TaskCompletionSource<bool> tcs = new();
@@ -126,11 +127,6 @@ public class PeerFactory : IPeerFactory
 
             remotePeerConnected = remotePeer =>
             {
-                if (((RemotePeer)remotePeer).LocalPeer != peer)
-                {
-                    return;
-                }
-
                 ConnectedTo(remotePeer, true).ContinueWith((t) => { tcs.TrySetResult(true); });
                 context.OnRemotePeerConnection -= remotePeerConnected;
             };
@@ -163,7 +159,7 @@ public class PeerFactory : IPeerFactory
 
         public Task DisconnectAsync()
         {
-            return _chan.CloseAsync().AsTask();
+            return _chan.CloseAsync();
         }
 
         public TaskAwaiter GetAwaiter()
@@ -181,13 +177,19 @@ public class PeerFactory : IPeerFactory
     {
         private readonly PeerFactory _factory;
 
-        public LocalPeer(PeerFactory factory)
+        public LocalPeer(PeerFactory factory, Identity identity)
         {
             _factory = factory;
+            Identity = identity;
         }
 
-        public Identity? Identity { get; set; }
-        public Multiaddress Address { get; set; }
+        public Identity Identity { get; }
+        public ConcurrentDictionary<Multiaddress, PeerAddressAccounting> Addresses { get; } = new();
+
+        public PeerAddressAccounting GetOrAddAddress(Multiaddress address)
+        {
+            return Addresses.GetOrAdd(address, (_key) => new PeerAddressAccounting());
+        }
 
         public Task<IRemotePeer> DialAsync(Multiaddress addr, CancellationToken token = default)
         {
@@ -203,34 +205,39 @@ public class PeerFactory : IPeerFactory
     internal class RemotePeer : IRemotePeer
     {
         private readonly PeerFactory _factory;
-        private readonly IPeerContext peerContext;
 
-        public RemotePeer(PeerFactory factory, ILocalPeer localPeer, IPeerContext peerContext)
+        public RemotePeer(PeerFactory factory, Identity identity)
         {
             _factory = factory;
-            LocalPeer = localPeer;
-            this.peerContext = peerContext;
+            Identity = identity;
         }
 
-        public Channel Channel { get; set; }
-
-        public Identity Identity { get; set; }
-        public Multiaddress Address { get; set; }
-        internal ILocalPeer LocalPeer { get; }
+        public Identity Identity { get; }
+        public ConcurrentDictionary<Multiaddress, PeerAddressAccounting> Addresses { get; } = new();
+        public PeerAddressAccounting GetOrAddAddress(Multiaddress address)
+        {
+            return Addresses.GetOrAdd(address, (_key) => new PeerAddressAccounting());
+        }
 
         public Task DialAsync<TProtocol>(CancellationToken token = default) where TProtocol : IProtocol
         {
             return _factory.DialAsync<TProtocol>(peerContext, token);
         }
+    }
+
+    internal class RemotePeerConnection : IRemotePeerConnection {
+        public IRemotePeer RemotePeer { get; }
+        private readonly IPeerContext peerContext;
+        public Channel Channel { get; } = new();
+        public RemotePeerConnection(IRemotePeer remotePeer, IPeerContext peerContext)
+        {
+            RemotePeer = remotePeer;
+            this.peerContext = peerContext;
+        }
 
         public Task DisconnectAsync()
         {
-            return Channel.CloseAsync().AsTask();
-        }
-
-        public IPeer Fork()
-        {
-            return (IPeer)MemberwiseClone();
+            return Channel.CloseAsync();
         }
     }
 }

@@ -18,7 +18,7 @@ public interface IProtocol
     /// <param name="upChannelFactory">Factory that spawns new channels used to interact with top layer protocols</param>
     /// <param name="context">Holds information about local and remote peers</param>
     /// <returns></returns>
-    Task DialAsync(IChannel downChannel, IChannelFactory? upChannelFactory, IPeerContext context);
+    Task<IRemotePeerConnection> DialAsync(IPeerFactory peerFactory, IChannelFactory? upChannelFactory);
 
     /// <summary>
     ///     Opens a channel to listen to a remote peer

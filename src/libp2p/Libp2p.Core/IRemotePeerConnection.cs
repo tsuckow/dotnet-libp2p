@@ -3,7 +3,8 @@
 
 namespace Nethermind.Libp2p.Core;
 
-public interface IRemotePeer : IPeer
+public interface IRemotePeerConnection
 {
-    Task DialAsync<TProtocol>(CancellationToken token = default) where TProtocol : IProtocol;
+    IRemotePeer RemotePeer {get;}
+    Task DisconnectAsync();
 }
