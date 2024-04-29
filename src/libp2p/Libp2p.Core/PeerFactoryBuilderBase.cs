@@ -53,10 +53,21 @@ public abstract class PeerFactoryBuilderBase<TBuilder, TPeerFactory> : IPeerFact
         return (TBuilder)this;
     }
 
-    protected class ProtocolStack
+    protected class ProtocolRegistry
     {
         private readonly IPeerFactoryBuilder builder;
         private readonly IServiceProvider serviceProvider;
+
+        public IEnumerable<ITransport> Transports { get; }
+
+        public IEnumerable<IMuxerProtocol> MuxerProtocols { get; }
+
+        public IEnumerable<ISecurityProtocol> SecurityProtocols { get; }
+
+        public IEnumerable<IIdentityProtocol> IdentityProtocols { get; }
+
+
+        public IEnumerable<IProtocol> OtherProtocols { get; }
 
         public ProtocolStack? Root { get; private set; }
         public ProtocolStack? Parent { get; private set; }

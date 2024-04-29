@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Demerzel Solutions Limited
 // SPDX-License-Identifier: MIT
 
+using Multiformats.Address;
+
 namespace Nethermind.Libp2p.Core;
 
 // TODO: Try the synchronous approach
@@ -29,3 +31,13 @@ public interface IProtocol
     /// <returns></returns>
     Task ListenAsync(IChannel downChannel, IChannelFactory? upChannelFactory, IPeerContext context);
 }
+
+public interface ITransport {
+     Task<IRemotePeerConnection> DialAsync(Multiaddress address, IChannelFactory? upChannelFactory);
+}
+
+public interface IMuxerProtocol {}
+
+public interface ISecurityProtocol {}
+
+public interface IIdentityProtocol {}
