@@ -7,6 +7,4 @@ namespace Nethermind.Libp2p.Core;
 
 public interface ILocalPeer : IPeer
 {
-    Task<IRemotePeer> DialAsync(Multiaddress addr, CancellationToken token = default);
-    Task<IListener> ListenAsync(Multiaddress addr, CancellationToken token = default);
 }

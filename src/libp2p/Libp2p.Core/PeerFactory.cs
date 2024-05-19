@@ -173,13 +173,11 @@ public class PeerFactory : IPeerFactory
         }
     }
 
-    protected class LocalPeer : ILocalPeer
+    public class LocalPeer : ILocalPeer
     {
-        private readonly PeerFactory _factory;
 
-        public LocalPeer(PeerFactory factory, Identity identity)
+        public LocalPeer(Identity identity)
         {
-            _factory = factory;
             Identity = identity;
         }
 
@@ -190,40 +188,9 @@ public class PeerFactory : IPeerFactory
         {
             return Addresses.GetOrAdd(address, (_key) => new PeerAddressAccounting());
         }
-
-        public Task<IRemotePeer> DialAsync(Multiaddress addr, CancellationToken token = default)
-        {
-            return _factory.DialAsync(this, addr, token);
-        }
-
-        public Task<IListener> ListenAsync(Multiaddress addr, CancellationToken token = default)
-        {
-            return _factory.ListenAsync(this, addr, token);
-        }
     }
 
-    internal class RemotePeer : IRemotePeer
-    {
-        private readonly PeerFactory _factory;
-
-        public RemotePeer(PeerFactory factory, Identity identity)
-        {
-            _factory = factory;
-            Identity = identity;
-        }
-
-        public Identity Identity { get; }
-        public ConcurrentDictionary<Multiaddress, PeerAddressAccounting> Addresses { get; } = new();
-        public PeerAddressAccounting GetOrAddAddress(Multiaddress address)
-        {
-            return Addresses.GetOrAdd(address, (_key) => new PeerAddressAccounting());
-        }
-
-        public Task DialAsync<TProtocol>(CancellationToken token = default) where TProtocol : IProtocol
-        {
-            return _factory.DialAsync<TProtocol>(peerContext, token);
-        }
-    }
+    
 
     internal class RemotePeerConnection : IRemotePeerConnection {
         public IRemotePeer RemotePeer { get; }

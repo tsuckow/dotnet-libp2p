@@ -10,9 +10,17 @@ namespace Nethermind.Libp2p.Stack;
 
 public static class ServiceProviderExtensions
 {
+ public static IServiceCollection AddLibp2pLocalPeer(this IServiceCollection services, ILocalPeer localPeer)
+    {
+        return services.AddSingleton<ILocalPeer>(localPeer);
+    }
+        
+
     [RequiresPreviewFeatures]
     public static IServiceCollection AddLibp2p(this IServiceCollection services, Func<ILibp2pPeerFactoryBuilder, IPeerFactoryBuilder> factorySetup)
     {
+        services.AddSingleton<DIProtocolRegistry>();
+
         return services
             .AddScoped(sp => factorySetup(new Libp2pPeerFactoryBuilder(sp)))
             .AddScoped(sp => (ILibp2pPeerFactoryBuilder)factorySetup(new Libp2pPeerFactoryBuilder(sp)))

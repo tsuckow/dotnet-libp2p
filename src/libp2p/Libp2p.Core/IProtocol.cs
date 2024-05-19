@@ -11,7 +11,7 @@ public interface IProtocol
     /// <summary>
     ///     Id used to during connection establishedment, exchanging information about protocol versions and so on
     /// </summary>
-    string Id { get; }
+    string Id { get; }  
 
     /// <summary>
     ///     Actively dials a peer
@@ -38,6 +38,8 @@ public interface ITransport {
 
 public interface IMuxerProtocol {}
 
-public interface ISecurityProtocol {}
+public interface ISecurityProtocol {
+    Task<IChannel> DialAsync(IRemotePeerConnection connection, IChannel channel);
+}
 
 public interface IIdentityProtocol {}
