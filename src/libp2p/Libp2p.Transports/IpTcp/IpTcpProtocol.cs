@@ -11,7 +11,7 @@ using Multiformats.Address.Protocols;
 
 namespace Nethermind.Libp2p.Protocols;
 
-public class IpTcpProtocol(ILoggerFactory? loggerFactory = null) : IProtocol
+public class IpTcpProtocol(ILoggerFactory? loggerFactory = null) : ITransport
 {
     private readonly ILogger? _logger = loggerFactory?.CreateLogger<IpTcpProtocol>();
 
@@ -212,5 +212,49 @@ public class IpTcpProtocol(ILoggerFactory? loggerFactory = null) : IProtocol
 
         await Task.WhenAll(receiveTask, sendTask);
         _ = upChannel.CloseAsync();
+    }
+
+    public async Task<IRemotePeerConnection> DialAsync(Multiaddress address)
+    {
+        Socket client = new(SocketType.Stream, ProtocolType.Tcp);
+        var isIP4 = address.Has<IP4>();
+        MultiaddressProtocol ipProtocol = isIP4 ? address.Get<IP4>() : address.Get<IP6>();
+        IPAddress ipAddress = IPAddress.Parse(ipProtocol.ToString());
+        int tcpPort = address.Get<TCP>().Port;
+
+        _logger?.LogDebug("Dialing {0}:{1}", ipAddress, tcpPort);
+
+        try
+        {
+            await client.ConnectAsync(new IPEndPoint(ipAddress, tcpPort));
+        }
+        catch (SocketException e)
+        {
+            _logger?.LogDebug($"Failed to connect {address}");
+            _logger?.LogTrace($"Failed with {e.GetType()}: {e.Message}");
+            throw;
+        }
+
+        IPEndPoint localEndpoint = (IPEndPoint)client.LocalEndPoint!;
+        IPEndPoint remoteEndpoint = (IPEndPoint)client.RemoteEndPoint!;
+
+
+        var remoteMultiaddress = new Multiaddress();
+        var remoteIpAddress = isIP4 ? remoteEndpoint.Address.MapToIPv4() : remoteEndpoint.Address.MapToIPv6();
+        remoteMultiaddress = isIP4 ? remoteMultiaddress.Add<IP4>(remoteIpAddress) : remoteMultiaddress.Add<IP6>(remoteIpAddress);
+        context.RemoteEndpoint = remoteMultiaddress.Add<TCP>(remoteEndpoint.Port);
+
+
+        var localMultiaddress = new Multiaddress();
+        var localIpAddress = isIP4 ? localEndpoint.Address.MapToIPv4() : localEndpoint.Address.MapToIPv6();
+        localMultiaddress = isIP4 ? localMultiaddress.Add<IP4>(localIpAddress) : localMultiaddress.Add<IP6>(localIpAddress);
+
+        context.LocalPeer.Address = context.LocalEndpoint.Add<P2P>(context.LocalPeer.Identity.PeerId.ToString());
+
+        var stream = new NetworkStream(client, true /* Closing Stream, closes socket */);
+
+        new RemotePeerConnection();
+
+        return new StreamChannel(stream);
     }
 }

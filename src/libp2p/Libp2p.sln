@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Libp2p.Core", "Libp2p.Core\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Libp2p.Protocols.Yamux", "Libp2p.Protocols.Yamux\Libp2p.Protocols.Yamux.csproj", "{5C164A63-988A-4E29-AE32-2E49344889B9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Libp2p.Protocols.IpTcp", "Libp2p.Protocols.IpTcp\Libp2p.Protocols.IpTcp.csproj", "{5D75E6A7-F477-4C0F-AB7C-73E5872D4B6D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Libp2p.Protocols.IpTcp", "Libp2p.Transports\IpTcp\Libp2p.Protocols.IpTcp.csproj", "{5D75E6A7-F477-4C0F-AB7C-73E5872D4B6D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Libp2p.Protocols.Multistream", "Libp2p.Protocols.Multistream\Libp2p.Protocols.Multistream.csproj", "{FD857783-0995-4BB2-81DE-0B11639F68F4}"
 EndProject
@@ -41,7 +41,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PubsubChat", "..\samples\pu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Libp2p.Protocols.MDns", "Libp2p.Protocols.MDns\Libp2p.Protocols.MDns.csproj", "{7F623900-2957-437B-BF19-879639FA6D22}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Libp2p.Protocols.Quic", "Libp2p.Protocols.Quic\Libp2p.Protocols.Quic.csproj", "{F4546A3C-A37C-4E4E-BD8C-BE8A70C2A4A8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Libp2p.Protocols.Quic", "Libp2p.Transports\Quic\Libp2p.Protocols.Quic.csproj", "{F4546A3C-A37C-4E4E-BD8C-BE8A70C2A4A8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Libp2p", "Libp2p\Libp2p.csproj", "{AEAA7328-A61E-46F6-BC45-F6F9E9412D7F}"
 EndProject
@@ -55,7 +55,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Libp2p.Protocols.Ping", "Li
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Multiformats.Hash", "..\cs-multihash\src\Multiformats.Hash\Multiformats.Hash.csproj", "{064158B8-C0A0-4CE5-8D6A-77FE657788FE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Libp2p.Protocols.Quic.Tests", "Libp2p.Protocols.Quic.Tests\Libp2p.Protocols.Quic.Tests.csproj", "{EEECB761-A3C3-4598-AD03-EFABBF6CAA77}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Libp2p.Protocols.Quic.Tests", "Libp2p.Transports\Quic.Tests\Libp2p.Protocols.Quic.Tests.csproj", "{EEECB761-A3C3-4598-AD03-EFABBF6CAA77}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A2304809-D04D-46CA-9B94-ED487E3E9B79}"
 	ProjectSection(SolutionItems) = preProject

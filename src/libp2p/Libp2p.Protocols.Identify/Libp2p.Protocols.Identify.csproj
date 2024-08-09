@@ -19,7 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Libp2p.Core\Libp2p.Core.csproj" />
     <ProjectReference Include="..\Libp2p.Generators.Protobuf\Libp2p.Generators.Protobuf.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\Libp2p.Protocols.IpTcp\Libp2p.Protocols.IpTcp.csproj" />
+    <ProjectReference Include="..\Libp2p.Transports\IpTcp\Libp2p.Protocols.IpTcp.csproj" />
   </ItemGroup>
 
   <ItemGroup>

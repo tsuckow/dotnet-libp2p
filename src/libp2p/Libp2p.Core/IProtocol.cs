@@ -33,10 +33,17 @@ public interface IProtocol
 }
 
 public interface ITransport {
-     Task<IRemotePeerConnection> DialAsync(Multiaddress address, IChannelFactory? upChannelFactory);
+     Task<IRemotePeerConnection> DialAsync(Multiaddress address);
+
+     Task ListenAsync(Multiaddress localAddress, Action<IChannel, Multiaddress> onConnection, CancellationToken token);
 }
 
-public interface IMuxerProtocol {}
+public interface IMuxerProtocol {
+    Task<IChannelMultiplexer> DialAsync(IRemotePeerChannel channel);
+
+    //Handle an incoming connection
+    Task<IChannelMultiplexer> ListenAsync(IRemotePeerChannel channel);
+}
 
 public interface ISecurityProtocol {
     Task<IChannel> DialAsync(IRemotePeerConnection connection, IChannel channel);
